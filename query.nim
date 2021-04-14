@@ -1,49 +1,8 @@
 {.experimental: "callOperator".}
 
-import json
+import json, jsonUtils
 import sequtils
 import hashes
-
-proc comparisionOperation*(
-        op: proc(a: int, b: int) : bool, 
-        opF: proc(a: float, b: float) : bool, 
-        lhs: JsonNode, 
-        rhs: JsonNode
-    ): bool =
-    case lhs.kind:
-        of JInt: 
-            case rhs.kind:
-                of JFloat: return opF(float(lhs.getInt), rhs.getFloat)
-                of JInt: return op(lhs.getInt, rhs.getInt)
-                else: raise newException(ValueError, "Cannot compare " & $lhs.kind & " with " & $rhs.kind)
-        of JFloat:
-            case rhs.kind:
-                of JFloat: return opF(lhs.getFloat, rhs.getFloat)
-                of JInt: return opF(lhs.getFloat, float(rhs.getInt))
-                else: raise newException(ValueError, "Cannot compare " & $lhs.kind & " with " & $rhs.kind)
-        else: raise newException(ValueError, "Cannot compare " & $lhs.kind & " with " & $rhs.kind)
-
-proc `>`*(lhs: JsonNode, rhs: JsonNode): bool = comparisionOperation(
-    proc(a: int, b: int) : bool = a > b, proc(a: float, b: float) : bool = a > b, 
-    lhs, rhs
-)
-
-proc `>=`*(lhs: JsonNode, rhs: JsonNode): bool = comparisionOperation(
-    proc(a: int, b: int) : bool = a >= b, proc(a: float, b: float) : bool = a >= b, 
-    lhs, rhs
-)
-
-proc `<=`*(lhs: JsonNode, rhs: JsonNode): bool = comparisionOperation(
-    proc(a: int, b: int) : bool = a <= b, proc(a: float, b: float) : bool = a <= b, 
-    lhs, rhs
-)
-
-proc `<`*(lhs: JsonNode, rhs: JsonNode): bool = comparisionOperation(
-    proc(a: int, b: int) : bool = a < b, proc(a: float, b: float) : bool = a < b, 
-    lhs, rhs
-)
-
-#################################################
 
 type
     QueryInstance* = ref object of RootObj
