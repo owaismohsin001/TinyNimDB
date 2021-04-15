@@ -3,22 +3,25 @@ import options
 import strutils
 import json
 import idQuery
+import cache
 import query
 
 type
     Table* = ref object of RootObj
         storage: JsonStorage
         name: string
-        query_cache: int
+        query_cache: LruCache[string, seq[JsonNode]]
         next_id: Option[int]
 
-proc create*(storage: JsonStorage, name: string, cache_size: int = 10) : Table = Table(storage: storage, name: name, next_id: none(int), query_cache: cache_size)
+proc create*(storage: JsonStorage, name: string, cache_size: int = 10) : Table = Table(storage: storage, name: name, next_id: none(int), query_cache: newLruCache[string, seq[JsonNode]](cache_size))
 
 proc len*(self: Table): int =
     let tables: JsonNode = self.storage.read()
     if isNil(tables): return 0
     if self.name in tables: return len(tables[self.name])
     return 0
+
+proc clear_cache*(self: Table) = self.query_cache.clear
 
 proc read_table(self: Table) : JsonNode =
     let tables = self.storage.read
@@ -67,6 +70,7 @@ proc update_table(self: Table, updater: proc(_: JsonNode) : void = proc(a: JsonN
         inner_table[doc_id] = doc
     tables[self.name] = inner_table
     self.storage.write(tables)
+    self.clear_cache()
 
 proc insert*(self: Table, document: JsonNode) : int =
     let doc_id = self.get_next_id
@@ -99,9 +103,13 @@ iterator pairs*(self: Table): (string, JsonNode) =
 
 proc search*(self: Table, cond: QueryInstance): seq[JsonNode] =
     result = @[]
+    let hasedCond = hashToString cond
+    if self.query_cache.contains(hasedCond):
+        return self.query_cache[hasedCond]
     for doc in self:
         if cond.call(doc):
             result.add(doc)
+    self.query_cache[hasedCond] = result
 
 proc get*(self: Table, cond: IdOrQuery[int]): JsonNode =
     for doc in self:

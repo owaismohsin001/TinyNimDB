@@ -57,10 +57,11 @@ proc `~`*(self: QueryInstance): QueryInstance = QueryInstance(
     path: self.path
 )
 
-proc `==`*(self: QueryInstance, rhs: JsonNode): QueryInstance = self.generate_test(
-    proc(value: JsonNode): bool = value == rhs,
-    hash("==") !& hash(self.path) !& hash rhs
-)
+proc `==`*(self: QueryInstance, rhs: JsonNode): QueryInstance = 
+    return self.generate_test(
+        proc(value: JsonNode): bool = value == rhs,
+        hash("==") !& hash(self.path) !& hash rhs
+    )
 
 proc `!=`*(self: QueryInstance, rhs: JsonNode): QueryInstance = self.generate_test(
     proc(value: JsonNode): bool = value != rhs,
@@ -147,3 +148,5 @@ proc all*(self: QueryInstance, cond: JsonNode): QueryInstance = self.generate_te
 )
 
 proc where*(path: string) : QueryInstance = Query()[path]
+
+proc hashToString*(v: QueryInstance) : string = $hash v

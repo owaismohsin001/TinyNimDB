@@ -21,6 +21,6 @@ aforementioned, `TinyDB` is here aliased to create `createDB` since it's no long
 - [x] Basic TinyDB API
 - [x] The Json storage system
 - [ ] `upsert`, `one_of`, and `match` function
-- [ ] Query Cache
+- [x] Query Cache
 - [ ] Custom storage support
 - [ ] Custom middleware support

@@ -8,3 +8,5 @@ echo t.update(proc(n: JsonNode) =
     n["age"] = n["age"] + %* 1,
     Create[seq[int]](where("name") == %* "Angena")
 )
+
+echo t.search(where("name") == %* "Angena")
