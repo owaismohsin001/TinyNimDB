@@ -28,9 +28,3 @@ proc read*(this: JsonStorage): JsonNode =
         result = nil
     else:
         result = parseJson(content)
-
-# var db: Storage = create("test.json")
-# var content = db.read
-# content = if isNil(content): %*{"x": 0} else: db.read
-# content["x"] = %* (content["x"].getFloat + 1.0)
-# db.write(content)

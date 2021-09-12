@@ -101,15 +101,25 @@ iterator items*(self: Table) : JsonNode =
 iterator pairs*(self: Table): (string, JsonNode) =
     for k, v in self.read_table: yield (k, v)
 
-proc search*(self: Table, cond: QueryInstance): seq[JsonNode] =
-    result = @[]
+iterator search*(self: Table, cond: QueryInstance): JsonNode =
+    var res: seq[JsonNode] = @[]
     let hasedCond = hashToString cond
     if self.query_cache.contains(hasedCond):
-        return self.query_cache[hasedCond]
+        for a in self.query_cache[hasedCond]: yield a
     for doc in self:
         if cond.call(doc):
-            result.add(doc)
-    self.query_cache[hasedCond] = result
+            res.add(doc)
+            yield doc
+    self.query_cache[hasedCond] = res
+
+iterator search*(self: Table, id: int): JsonNode =
+    let table = self.read_table
+    if table.contains($id):
+        yield table[$id]
+
+proc search*[T](self: Table, cond: T): seq[JsonNode] =
+    result = @[]
+    for doc in self.search(cond): result.add(doc)
 
 proc get*(self: Table, cond: IdOrQuery[int]): JsonNode =
     for doc in self:
@@ -121,6 +131,12 @@ proc get*(self: Table, cond: IdOrQuery[int]): JsonNode =
             if table.contains(right):
                 return table[right]
             return nil
+
+proc get*(self: Table, id: int): JsonNode =
+    return self.get(IdOrQuery[int](kind: idKind, lValue: id))
+
+proc get*(self: Table, query: QueryInstance): JsonNode =
+    return self.get(IdOrQuery[int](kind: queryKind, rValue: query))
 
 proc update*(self: Table, fields: JsonNode, cond: IdOrQuery[seq[int]]) : seq[int] =
     var updated_ids: seq[int] = @[]
@@ -190,7 +206,10 @@ proc remove*(self: Table, cond: IdOrQuery[seq[int]]) : seq[int] =
     )
     return removed_ids
 
-proc count*(self: Table, cond: QueryInstance) : int = len(self.search(cond))
+proc count*(self: Table, cond: QueryInstance) : int = 
+    result = 0
+    for x in self.search(cond):
+        result += 1
 
 proc truncate*(self: Table) =
     self.update_table(

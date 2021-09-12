@@ -2,8 +2,6 @@ import dataTable as db
 import jsonStorage
 import tables
 import sets
-import query
-import idQuery
 import json
 
 type
