@@ -1,4 +1,4 @@
-import dataTable, query, jsonStorage, json, idQuery, database, jsonUtils
+import dataTable, query, jsonStorage, json, idQuery, database, jsonUtils 
 
 var base = createDB("test.json", makeStorage = jsonStorage.create)
 let t = base.table("people")

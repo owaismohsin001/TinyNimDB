@@ -1,6 +1,7 @@
 {.experimental: "callOperator".}
 
 import json, jsonUtils
+import re
 import sequtils
 import hashes
 
@@ -145,6 +146,26 @@ proc all*(self: QueryInstance, cond: JsonNode): QueryInstance = self.generate_te
             result = result and (x in cond)
     ,
     hash("all") !& hash(self.path) !& hash cond
+)
+
+proc one_of*(self: QueryInstance, items: seq[JsonNode]): QueryInstance = self.generate_test(
+    proc(value: JsonNode): bool =
+        return value in items
+    , hash("one_of") !& hash(self.path) !& hash items
+)
+
+proc one_of*(self: QueryInstance, items: JsonNode): QueryInstance = self.generate_test(
+    proc(value: JsonNode): bool =
+        return value in items
+    , hash("one_of") !& hash(self.path) !& hash items
+)
+
+proc matches*(self: QueryInstance, rePattern: string): QueryInstance = self.generate_test(
+    proc(value: JsonNode): bool =
+        if value.kind == JString:
+            return re.match(value.getStr, rex rePattern)
+        else: return false
+    , hash("matches") !& hash(self.path) !& hash rePattern
 )
 
 proc where*(path: string) : QueryInstance = Query()[path]

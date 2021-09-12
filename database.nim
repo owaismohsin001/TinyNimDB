@@ -14,17 +14,6 @@ type
         tableCreator: proc(storage: JsonStorage, name: string, cache_size: int = 10) : db.Table
         default_table_name: string
 
-proc createDB*(
-    path: string, create_dir: bool = false, access_mode: FileMode = fmWrite,
-    makeStorage: proc(path: string, create_dir: bool = false, access_mode: FileMode = fmWrite) : JsonStorage
-    ): NimDb = NimDB(
-        storage: makeStorage(path, create_dir, access_mode), 
-        opened: true, 
-        internal_tables: newTable[string, db.Table](), 
-        tableCreator: db.create,
-        default_table_name: "_default"
-        )
-
 proc tableToSet(self: TableRef[string, db.Table]): HashSet[string] =
     var hashSet = initHashSet[string]()
     for k, _ in self:
@@ -42,6 +31,19 @@ proc table*(self: NimDB, name: string, cache_size: int = 10): db.Table =
     let table = self.tableCreator(self.storage, name, cache_size)
     self.internal_tables[name] = table
     return table
+
+proc createDB*(
+    path: string, create_dir: bool = false, access_mode: FileMode = fmWrite,
+    makeStorage: proc(path: string, create_dir: bool = false, access_mode: FileMode = fmWrite) : JsonStorage
+    ): NimDb = 
+    var db = NimDB(
+        storage: makeStorage(path, create_dir, access_mode), 
+        opened: true, 
+        internal_tables: newTable[string, db.Table](), 
+        tableCreator: db.create,
+        default_table_name: "_default"
+        )
+    return db
 
 proc drop_table*(self: var NimDB, name: string) =
     if name in self.tables:
